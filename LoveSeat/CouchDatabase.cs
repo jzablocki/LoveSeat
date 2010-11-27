@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
@@ -10,7 +11,7 @@ namespace LoveSeat
     public class CouchDatabase : CouchBase, IDocumentDatabase
     {
         private readonly string databaseBaseUri;
-         public CouchDatabase(string baseUri, string databaseName, string username, string password)
+        public CouchDatabase(string baseUri, string databaseName, string username, string password)
             : base(username, password)
         {
             this.baseUri = baseUri;
@@ -30,7 +31,7 @@ namespace LoveSeat
                 .Put().Form()
                 .Data(jsonForDocument)
                 .GetResponse();
-            return 
+            return
                 resp.GetCouchDocument();
         }
 
@@ -46,12 +47,12 @@ namespace LoveSeat
         public Document CreateDocument(string jsonForDocument)
         {
             var json = JObject.Parse(jsonForDocument);
-            var jobj = 
+            var jobj =
                 GetRequest(databaseBaseUri + "/").Post().Json().Data(jsonForDocument).GetResponse().GetJObject();
             json["_id"] = jobj["_id"];
             json["_rev"] = jobj["_rev"];
             return new Document(json);
-        }        
+        }
         public JObject DeleteDocument(string id, string rev)
         {
             return GetRequest(databaseBaseUri + "/" + id + "?rev=" + rev).Delete().Form().GetResponse().GetJObject();
@@ -64,7 +65,7 @@ namespace LoveSeat
         public Document GetDocument(string id)
         {
             var resp = GetRequest(databaseBaseUri + "/" + id).Get().Json().GetResponse();
-            if (resp.StatusCode==HttpStatusCode.NotFound) return null;
+            if (resp.StatusCode == HttpStatusCode.NotFound) return null;
             return resp.GetCouchDocument();
         }
 
@@ -174,26 +175,27 @@ namespace LoveSeat
         public ViewResult<T> View<T>(string designDoc, string viewName, ViewOptions options, IObjectSerializer<T> objectSerializer)
         {
             var uri = databaseBaseUri + "/_design/" + designDoc + "/_view/" + viewName;
-            return ProcessGenericResults<T>(uri, options, objectSerializer);                 
+            return ProcessGenericResults<T>(uri, options, objectSerializer);
         }
         private ViewResult<T> ProcessGenericResults<T>(string uri, ViewOptions options, IObjectSerializer<T> objectSerializer)
         {
-            CouchRequest req = GetRequest(options, uri);
-            var resp = req.GetResponse();
-            return new ViewResult<T>(resp, req.GetRequest(), objectSerializer);
-        }
+            var resource = GetUri(options, uri);
+            
+            var resp = Fetcher.Fetch(resource);
+            return new ViewResult<T>(resp.Response, (int)resp.StatusCode, resp.Etag, objectSerializer);
+        }   
         private ViewResult ProcessResults(string uri, ViewOptions options)
         {
-            CouchRequest req = GetRequest(options, uri);
-            var resp = req.GetResponse();
-            return new ViewResult(resp, req.GetRequest());
+            var resource = GetUri(options, uri);
+            var resp = Fetcher.Fetch(resource);
+            return new ViewResult(resp.Response, (int)resp.StatusCode, resp.Etag);
         }
-        
-        private CouchRequest GetRequest(ViewOptions options, string uri)
+
+        private Uri GetUri(ViewOptions options, string uri)
         {
             if (options != null)
                 uri += "?" + options.ToString();
-            return GetRequest(uri, options == null ? null : options.Etag).Get().Json();
+            return new Uri(uri);
         }
 
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Web;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
@@ -41,11 +42,11 @@ namespace LoveSeat
         {
             string result = "";
             if (Key != null)
-                result += "&key=" + Key.ToString(Formatting.None);
+                result += "&key=" + HttpUtility.UrlEncode(Key.ToString(Formatting.None));
             if (StartKey != null)
-                result += "&startkey=" + StartKey.ToString(Formatting.None);
+                result += "&startkey=" + HttpUtility.UrlEncode(StartKey.ToString(Formatting.None));
             if (EndKey != null)
-                result += "&endkey=" + EndKey.ToString(Formatting.None);
+                result += "&endkey=" + HttpUtility.UrlEncode(EndKey.ToString(Formatting.None));
             if (Limit.HasValue)
                 result += "&limit=" + Limit.Value.ToString();
             if (Skip.HasValue)
@@ -64,7 +65,8 @@ namespace LoveSeat
                 result += "&descending=" + Descending.Value.ToString().ToLower();
             if (Stale.HasValue && Stale.Value)
                 result += "&stale=ok";
-            return result.Length < 1 ? "" : result.Substring(1);
+            var encodedString = result.Length < 1 ? "" : result.Substring(1);
+            return encodedString;
         }
     }
    

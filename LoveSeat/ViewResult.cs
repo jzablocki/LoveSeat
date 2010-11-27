@@ -12,8 +12,8 @@ namespace LoveSeat
     public class ViewResult<T> : ViewResult
     {
         private readonly IObjectSerializer<T> objectSerializer = null;
-        public ViewResult(HttpWebResponse response, HttpWebRequest request, IObjectSerializer<T> objectSerializer)
-            : base(response, request)
+        public ViewResult(string responseString, int statusCode, string eTag, IObjectSerializer<T> objectSerializer)
+            : base(responseString, statusCode, eTag)
         {
             this.objectSerializer = objectSerializer;
         }
@@ -35,29 +35,23 @@ namespace LoveSeat
 
     public class ViewResult
     {
-        private readonly HttpWebResponse response;
-        private readonly HttpWebRequest request;
+        public string ETag { get; set; }
         private JObject json = null;
         private readonly string responseString;
+        private string eTag;
+        private HttpStatusCode statusCode;
 
         public JObject Json { get { return json ?? (json = JObject.Parse(responseString)); } }
-        public ViewResult(HttpWebResponse response, HttpWebRequest request)
+        public ViewResult(string responseString, int statusCode, string eTag)
         {
-            this.response = response;
-            this.request = request;
-            this.responseString = response.GetResponseString();
+            this.eTag = eTag;
+            this.responseString = responseString;
+            this.statusCode = (HttpStatusCode) statusCode;
         }
-        /// <summary>
-        /// Typically won't be needed.  Provided for debuging assistance
-        /// </summary>
-        public HttpWebRequest Request { get { return request; } }
-        /// <summary>
-        /// Typically won't be needed.  Provided for debugging assistance
-        /// </summary>
-        public HttpWebResponse Response { get { return response; } }
-        public HttpStatusCode StatusCode { get { return response.StatusCode; } }
 
-        public string Etag { get { return response.Headers["ETag"]; } }
+        public HttpStatusCode StatusCode { get { return statusCode; } }
+
+        public string Etag { get { return eTag; } }
         public int TotalRows { get { return Json["total_rows"].Value<int>(); } }
         public int OffSet { get { return Json["offset"].Value<int>(); } }
         public IEnumerable<JToken> Rows { get { return (JArray)Json["rows"]; } }

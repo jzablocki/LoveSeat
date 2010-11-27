@@ -15,7 +15,7 @@ namespace LoveSeat
         /// This is only intended for use if your CouchDb is in Admin Party
         /// </summary>
         public CouchClient()
-            : this("localhost", 5984, null, null)
+            : this("127.0.0.1", 5984, null, null)
         {
         }
         /// <summary>
@@ -24,7 +24,7 @@ namespace LoveSeat
         /// <param name="username"></param>
         /// <param name="password"></param>
         public CouchClient(string username, string password)
-            : this("localhost", 5984, username, password)
+            : this("127.0.0.1", 5984, username, password)
         {
         }
 
